@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORKSTATION — TAT SIDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0f13;
+    --panel:#161a20;
+    --panel-alt:#1d232b;
+    --border:#2a323d;
+    --text:#edf1f6;
+    --muted:#8996a6;
+    --green:#2f9e44;
+    --green-bg:rgba(47,158,68,.14);
+    --yellow:#f2b705;
+    --yellow-bg:rgba(242,183,5,.14);
+    --red:#e0392b;
+    --red-bg:rgba(224,57,43,.16);
+    --amber:#ffb020;
+    --cyan:#34d3c9;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(52,211,201,.06), transparent 60%),
+      radial-gradient(1000px 500px at -10% 110%, rgba(255,176,32,.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    position:relative;
+    font-size:clamp(12px, 1.15vw, 20px);
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .display{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;}
+
+  header{
+    position:relative;
+    flex:0 0 auto;
+    padding:clamp(8px,1.1vh,16px) clamp(14px,2vw,28px);
+    background:linear-gradient(180deg,#12161c,#0e1116 90%);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:nowrap;
+    overflow:hidden;
+  }
+  header::before{
+    content:"";position:absolute;inset:0 0 auto 0;height:4px;
+    background:repeating-linear-gradient(135deg,var(--amber) 0 14px,#0c0f13 14px 28px);
+    opacity:.9;
+  }
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand .eyebrow{
+    display:flex;align-items:center;gap:8px;
+    color:var(--cyan);font-size:12px;letter-spacing:.14em;font-weight:600;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 var(--cyan);animation:pulse 1.8s infinite;}
+  .dot.err{background:var(--red);}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(52,211,201,.55);}
+    70%{box-shadow:0 0 0 9px rgba(52,211,201,0);}
+    100%{box-shadow:0 0 0 0 rgba(52,211,201,0);}
+  }
+  .brand h1{margin:2px 0 0;font-size:clamp(18px,1.9vw,34px);font-weight:700;line-height:1.05;}
+  .brand .sub{color:var(--muted);font-size:clamp(10px,.85vw,15px);margin-top:2px;}
+  .clock{font-size:clamp(16px,1.7vw,30px);font-weight:600;letter-spacing:.03em;color:var(--text);text-align:right;flex:0 0 auto;}
+  .clock small{display:block;color:var(--muted);font-size:clamp(9px,.65vw,13px);font-family:'Inter';letter-spacing:.08em;text-transform:uppercase;}
+
+  main{
+    flex:1 1 auto;min-height:0;
+    padding:clamp(10px,1.4vh,22px) clamp(14px,2vw,28px);
+    display:grid;
+    grid-template-rows:auto minmax(0,1.35fr) minmax(0,1fr);
+    gap:clamp(8px,1.2vh,18px);
+    overflow:hidden;
+  }
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:clamp(8px,1vw,18px);align-items:stretch;min-height:0;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:clamp(10px,1.3vh,18px);
+    display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  }
+  .card h2{
+    margin:0 0 clamp(6px,1vh,12px);font-size:clamp(11px,.95vw,16px);color:var(--muted);
+    letter-spacing:.1em;font-weight:600;display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
+  }
+  .chart-wrap{position:relative;flex:1 1 auto;min-height:0;}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,.8vw,12px);}
+  .kpi{
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:8px;
+    padding:clamp(8px,1.1vh,14px);
+  }
+  .kpi .label{font-size:clamp(9px,.7vw,13px);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+  .kpi .value{font-family:'JetBrains Mono',monospace;font-size:clamp(16px,1.7vw,30px);font-weight:700;margin-top:4px;}
+  .kpi .value.green{color:var(--green);}
+  .kpi .value.yellow{color:var(--yellow);}
+  .kpi .value.red{color:var(--red);}
+
+  .voice-panel{gap:clamp(8px,1.1vh,14px);}
+  .voice-panel > *{flex:0 0 auto;}
+  .voice-panel .log-block{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+  .talker-status{
+    display:flex;align-items:center;gap:12px;
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:8px;padding:clamp(8px,1.1vh,14px);
+  }
+  .vu{display:flex;align-items:flex-end;gap:3px;height:22px;}
+  .vu span{width:4px;background:var(--cyan);border-radius:2px;height:6px;opacity:.35;transition:height .12s,opacity .12s;}
+  .vu.on span{opacity:1;animation:vu 0.9s ease-in-out infinite;}
+  .vu span:nth-child(1){animation-delay:0s;}
+  .vu span:nth-child(2){animation-delay:.12s;}
+  .vu span:nth-child(3){animation-delay:.24s;}
+  .vu span:nth-child(4){animation-delay:.36s;}
+  .vu span:nth-child(5){animation-delay:.48s;}
+  @keyframes vu{0%,100%{height:6px;}50%{height:20px;}}
+  .talker-status .txt{font-size:13px;color:var(--muted);}
+  .talker-status .txt b{color:var(--text);}
+
+  .btn{
+    appearance:none;border:1px solid var(--border);background:var(--panel-alt);color:var(--text);
+    padding:10px 14px;border-radius:8px;font-family:'Inter';font-size:13px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn:hover{border-color:var(--cyan);}
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  .btn.primary{background:var(--cyan);color:#0c0f13;border-color:var(--cyan);}
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn.ghost{background:transparent;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .log{
+    list-style:none;margin:0;padding:0;flex:1 1 auto;min-height:0;overflow:hidden;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .log li{
+    font-size:clamp(10px,.85vw,15px);background:var(--panel-alt);border:1px solid var(--border);
+    border-left:3px solid var(--muted);border-radius:6px;padding:clamp(4px,.7vh,8px) 10px;
+    display:flex;justify-content:space-between;gap:10px;flex:0 0 auto;
+  }
+  .log li.green{border-left-color:var(--green);}
+  .log li.yellow{border-left-color:var(--yellow);}
+  .log li.red{border-left-color:var(--red);}
+  .log li .t{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;}
+  .log .empty{color:var(--muted);font-size:12.5px;padding:8px 2px;}
+
+  table{width:100%;border-collapse:collapse;font-size:clamp(11px,1vw,18px);}
+  thead th{
+    text-align:left;color:var(--muted);font-size:clamp(9px,.75vw,13px);letter-spacing:.08em;text-transform:uppercase;
+    padding:clamp(4px,.7vh,8px) 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);
+  }
+  tbody td{padding:clamp(3px,.55vh,8px) 10px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
+  tbody tr.green td.tatcell{color:var(--green);font-weight:700;}
+  tbody tr.yellow td.tatcell{color:var(--yellow);font-weight:700;}
+  tbody tr.red td.tatcell{color:var(--red);font-weight:700;}
+  .table-wrap{flex:1 1 auto;min-height:0;overflow:hidden;}
+  table{table-layout:fixed;}
+
+  .banner{
+    display:none;align-items:flex-start;gap:10px;background:var(--red-bg);
+    border:1px solid rgba(224,57,43,.4);border-radius:8px;padding:12px 14px;font-size:13px;
+    position:absolute;left:clamp(14px,2vw,28px);right:clamp(14px,2vw,28px);
+    bottom:clamp(10px,1.4vh,22px);z-index:20;box-shadow:0 8px 30px rgba(0,0,0,.5);
+  }
+  .banner.show{display:flex;}
+  .banner b{color:var(--red);}
+  a{color:var(--cyan);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="eyebrow"><span class="dot" id="statusDot"></span><span id="statusText">CONECTANDO…</span></div>
+    <h1 class="display">Workstation — TAT Sider</h1>
+    <div class="sub">Seguimiento en vivo desde la puerta hasta que sale · Hoja "SIC SIDER" - Desarrollado por Ingeniero Brian Castro</div>
+  </div>
+  <div class="clock">
+    <small>Hora local</small>
+    <span id="clock" class="mono">--:--:--</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="banner" id="errorBanner">
+    <span>⚠️</span>
+    <div>
+      <b>No se pudo leer la hoja de cálculo.</b>
+      <div id="errorDetail">Verifica que el archivo de Google Sheets esté compartido como "Cualquier persona con el enlace puede ver" y vuelve a intentarlo.</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Registros hoy</div><div class="value" id="kpiTotal">—</div></div>
+    <div class="kpi"><div class="label">Cumplimiento (&lt; 75 min)</div><div class="value" id="kpiCumpl">—</div></div>
+    <div class="kpi"><div class="label">TAT promedio</div><div class="value" id="kpiProm">—</div></div>
+    <div class="kpi"><div class="label">Última lectura</div><div class="value" id="kpiUltima" style="font-size:clamp(12px,1.05vw,20px);">—</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Master Montacargas · TAT Sider por hora</h2>
+      <div class="chart-wrap"><canvas id="chart"></canvas></div>
+    </div>
+
+    <div class="card voice-panel">
+      <h2>Talker <span id="lastUpdate" class="mono" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted);font-size:clamp(9px,.65vw,12px);"></span></h2>
+
+      <div class="talker-status">
+        <div class="vu" id="vu"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="txt" id="talkerTxt">Voz <b>activada</b>. Lee el resumen completo cada 3 minutos.</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="btnReadNow">↻ Leer ahora</button>
+      </div>
+
+      <div class="log-block">
+        <h2 style="margin-top:6px;">Registros anunciados</h2>
+        <ul class="log" id="log"><li class="empty">Aún no hay anuncios en esta sesión.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Detalle por hora</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Placa</th><th>Hora</th><th>TAT Sider (min)</th><th>Acumulado</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="4" style="color:var(--muted);">Cargando datos…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ---------- CONFIG ----------
+const SHEET_ID = '1asyzIGm7rjXzfE9WjG-9n5qGDUv5umXZOH_g4khC92I';
+const GID_SIC_SIDER = '1504577924';
+const POLL_MS = 20000;
+const READOUT_MS = 5 * 60 * 1000;   // lectura completa cada 5 minutos
+let gvizCounter = 0;
+const ZONES = { green: 60, yellow: 75, max: 120 };
+
+// ---------- STATE ----------
+let latestRows = [];
+let readoutTimer = null;
+let voiceEnabled = true;   // la voz siempre está activa
+let muted = false;
+let voiceUnlocked = false;
+let firstReadoutDone = false;
+let prevRowMap = null;   // snapshot anterior para detectar registros nuevos / cambiados
+let speechQueue = [];
+let speaking = false;
+let chart = null;
+let spanishVoice = null;
+
+// ---------- CLOCK ----------
+function tickClock(){
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('es-CO', {hour12:false});
+}
+setInterval(tickClock, 1000); tickClock();
+
+// ---------- GVIZ JSONP FETCH (evita el bloqueo CORS de fetch()) ----------
+function fetchViaJSONP(){
+  return new Promise((resolve, reject) => {
+    const cbName = 'gvizCallback_' + (gvizCounter++);
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('Tiempo de espera agotado al contactar Google Sheets.')); }, 15000);
+    function cleanup(){
+      clearTimeout(timeout);
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName] = (response) => { cleanup(); resolve(response); };
+    const script = document.createElement('script');
+    script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID_SIC_SIDER}&tqx=responseHandler:${cbName}&t=${Date.now()}`;
+    script.onerror = () => { cleanup(); reject(new Error('No se pudo cargar la hoja (revisa que el enlace sea público).')); };
+    document.body.appendChild(script);
+  });
+}
+
+function extractRows(gvizTable){
+  const out = [];
+  (gvizTable.rows || []).forEach(r => {
+    const cells = r.c || [];
+    const placa = cells[0] && cells[0].v != null ? String(cells[0].v).trim() : '';
+    const horaCell = cells[1];
+    const horaRaw = horaCell ? (horaCell.f || horaCell.v || '') : '';
+    const horaMatch = String(horaRaw).match(/(\d{1,2}):(\d{2})/);
+    if(!horaMatch) return; // sólo filas de datos reales
+    const hora = `${horaMatch[1]}:${horaMatch[2]}`;
+    const tatCell = cells[2];
+    const tat = tatCell && tatCell.v != null && tatCell.v !== '' ? Number(tatCell.v) : null;
+    const acumCell = cells[3];
+    const acumulado = acumCell ? String(acumCell.f || acumCell.v || '').trim() : '';
+    out.push({ placa, hora, tat: (tat !== null && !isNaN(tat)) ? tat : null, acumulado });
+  });
+  return out;
+}
+
+function zoneOf(tat){
+  if(tat === null || isNaN(tat)) return null;
+  if(tat < ZONES.green) return 'green';
+  if(tat <= ZONES.yellow) return 'yellow';
+  return 'red';
+}
+
+// ---------- SPEECH ----------
+function pickVoice(){
+  const voices = speechSynthesis.getVoices();
+  spanishVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('es')) || voices[0] || null;
+}
+if('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = pickVoice;
+  pickVoice();
+}
+
+function hourToSpoken(hora){
+  const [hStr, mStr] = hora.split(':');
+  let h = parseInt(hStr,10), m = parseInt(mStr,10);
+  const period = h < 12 ? 'am' : 'pm';
+  let h12 = h % 12; if(h12 === 0) h12 = 12;
+  return m === 0 ? `${h12} ${period}` : `${h12} y ${m} ${period}`;
+}
+
+function buildPhrase(row){
+  const placaTxt = row.placa || 'sin placa';
+  let phrase = `Placa ${placaTxt}, hora ${hourToSpoken(row.hora)}, TAT Sider ${row.tat} minutos.`;
+  if(zoneOf(row.tat) === 'red') phrase += ' Atención, supera la meta.';
+  return phrase;
+}
+
+function speakNext(){
+  if(speaking || muted || !voiceEnabled || speechQueue.length === 0) return;
+  const { phrase } = speechQueue.shift();
+  const utter = new SpeechSynthesisUtterance(phrase);
+  if(spanishVoice) utter.voice = spanishVoice;
+  utter.lang = 'es-ES';
+  utter.rate = 1;
+  speaking = true;
+  setVU(true);
+  document.getElementById('talkerTxt').innerHTML = `Anunciando: <b>${phrase}</b>`;
+  utter.onend = () => {
+    speaking = false; setVU(false);
+    if(speechQueue.length === 0) updateWaitingMessage();
+    speakNext();
+  };
+  utter.onerror = () => { speaking = false; setVU(false); speakNext(); };
+  speechSynthesis.speak(utter);
+}
+
+function setVU(on){
+  document.getElementById('vu').classList.toggle('on', on);
+}
+
+function updateWaitingMessage(){
+  if(!voiceEnabled) return;
+  document.getElementById('talkerTxt').innerHTML = `Voz <b>activada</b>. Próxima lectura completa en ~5 min.`;
+}
+
+// Anuncia solo lo que cambió desde la última consulta (nuevo registro o TAT modificado)
+function rowKey(r){ return (r.placa || '') + '|' + r.hora; }
+
+function announceChanges(rows){
+  const withData = rows.filter(r => r.tat !== null && !isNaN(r.tat));
+  const newMap = new Map(withData.map(r => [rowKey(r), r]));
+  if(prevRowMap === null){ prevRowMap = newMap; return; } // primera carga: la lee runFullReadout
+  const changes = [];
+  newMap.forEach((r, k) => {
+    const prev = prevRowMap.get(k);
+    if(!prev) changes.push({ row:r, tipo:'nuevo' });
+    else if(prev.tat !== r.tat) changes.push({ row:r, tipo:'cambio' });
+  });
+  prevRowMap = newMap;
+  if(!changes.length || !voiceEnabled || muted) return;
+  changes.forEach(({ row, tipo }) => {
+    const prefix = tipo === 'nuevo' ? 'Nuevo registro. ' : 'Registro actualizado. ';
+    speechQueue.push({ phrase: prefix + buildPhrase(row) });
+    addLogEntry(row, zoneOf(row.tat));
+  });
+  speakNext();
+}
+
+// Lee TODA la tabla (placa, hora, TAT Sider) — sin la columna ACUMULADO — cada 5 minutos
+function runFullReadout(){
+  if(!voiceEnabled || muted) return;
+  speechSynthesis.cancel();
+  speechQueue = [];
+  speaking = false;
+  const rows = latestRows.filter(r => r.tat !== null && !isNaN(r.tat));
+  rows.forEach(row => {
+    speechQueue.push({ phrase: buildPhrase(row) });
+    addLogEntry(row, zoneOf(row.tat));
+  });
+  speakNext();
+}
+
+function startReadoutTimer(){
+  if(readoutTimer) return;
+  runFullReadout();
+  readoutTimer = setInterval(runFullReadout, READOUT_MS);
+}
+
+function addLogEntry(row, zone){
+  const list = document.getElementById('log');
+  const empty = list.querySelector('.empty');
+  if(empty) empty.remove();
+  const li = document.createElement('li');
+  li.className = zone || '';
+  const time = new Date().toLocaleTimeString('es-CO', {hour12:false});
+  li.innerHTML = `<span>${row.placa || 's/placa'} · ${row.hora} · ${row.tat} min</span><span class="t">${time}</span>`;
+  list.prepend(li);
+  while(list.children.length > 60) list.removeChild(list.lastChild);
+}
+
+// ---------- VOZ SIEMPRE ACTIVA ----------
+function unlockVoice(){
+  if(voiceUnlocked || !('speechSynthesis' in window)) return;
+  voiceUnlocked = true;
+  try{
+    speechSynthesis.resume();
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0; speechSynthesis.speak(u);
+  }catch(e){}
+  document.getElementById('talkerTxt').innerHTML = `Voz <b>activada</b>. Anuncia cada cambio y lee el resumen completo cada 5 minutos.`;
+}
+
+// Intenta arrancar la voz sola; si el navegador exige un gesto,
+// cualquier interacción (clic, tecla, toque, mando de la TV) la desbloquea.
+['click','keydown','touchstart','pointerdown','mousemove'].forEach(evt =>
+  window.addEventListener(evt, unlockVoice, { once:false, passive:true })
+);
+window.addEventListener('load', unlockVoice);
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden) unlockVoice();
+});
+
+// Chrome pausa speechSynthesis en colas largas: lo mantenemos vivo.
+setInterval(() => {
+  if(voiceEnabled && !muted && speechSynthesis.speaking) speechSynthesis.resume();
+}, 5000);
+
+document.getElementById('btnReadNow').addEventListener('click', () => {
+  unlockVoice();
+  runFullReadout();
+});
+
+// ---------- AUTOSCROLL TABLA (arriba -> abajo, en bucle) ----------
+function startTableAutoScroll(){
+  const wrap = document.querySelector('.table-wrap');
+  if(!wrap) return;
+  let pause = 60;        // pausa (en ticks de 40 ms) al llegar arriba
+  let atBottomFor = 0;   // ticks que llevamos pegados al fondo
+  setInterval(() => {
+    const max = wrap.scrollHeight - wrap.clientHeight;
+    if(max <= 2){ wrap.scrollTop = 0; return; }   // cabe todo: sin scroll
+    if(pause > 0){ pause--; return; }
+
+    // ¿ya estamos en el fondo? (con tolerancia por redondeo de píxeles)
+    if(wrap.scrollTop >= max - 2){
+      atBottomFor++;
+      if(atBottomFor >= 50){          // ~2 s abajo -> vuelve arriba
+        wrap.scrollTop = 0;
+        atBottomFor = 0;
+        pause = 80;                   // ~3 s arriba antes de bajar otra vez
+      }
+      return;
+    }
+    atBottomFor = 0;
+    wrap.scrollTop = Math.min(wrap.scrollTop + 1, max);
+  }, 40);
+}
+window.addEventListener('load', startTableAutoScroll);
+
+// ---------- CHART ----------
+const zoneBandsPlugin = {
+  id:'zoneBands',
+  beforeDraw(c){
+    const { ctx, chartArea:{left,right,top,bottom}, scales:{y} } = c;
+    if(!y) return;
+    const bands = [
+      [0, ZONES.green, 'rgba(47,158,68,.16)'],
+      [ZONES.green, ZONES.yellow, 'rgba(242,183,5,.16)'],
+      [ZONES.yellow, ZONES.max, 'rgba(224,57,43,.16)']
+    ];
+    ctx.save();
+    bands.forEach(([from,to,color]) => {
+      const yFrom = y.getPixelForValue(from);
+      const yTo = y.getPixelForValue(to);
+      ctx.fillStyle = color;
+      ctx.fillRect(left, Math.min(yFrom,yTo), right-left, Math.abs(yFrom-yTo));
+    });
+    ctx.restore();
+  }
+};
+
+const valueLabelsPlugin = {
+  id:'valueLabels',
+  afterDatasetsDraw(c){
+    const { ctx } = c;
+    c.getDatasetMeta(0).data.forEach((pt, i) => {
+      const v = c.data.datasets[0].data[i];
+      if(v === null || v === undefined) return;
+      ctx.save();
+      ctx.fillStyle = '#edf1f6';
+      ctx.font = "700 11px 'JetBrains Mono', monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText(v, pt.x, pt.y - 10);
+      ctx.restore();
+    });
+  }
+};
+
+function initChart(rows){
+  const ctx = document.getElementById('chart').getContext('2d');
+  chart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: rows.map(r => r.hora),
+      datasets:[{
+        data: rows.map(r => r.tat),
+        borderColor:'#edf1f6',
+        backgroundColor:'#edf1f6',
+        pointBackgroundColor:'#0c0f13',
+        pointBorderColor:'#edf1f6',
+        pointRadius:4,
+        pointHoverRadius:6,
+        borderWidth:2,
+        spanGaps:true,
+        tension:.15
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:300},
+      scales:{
+        y:{ min:0, max:ZONES.max, grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#8996a6'} },
+        x:{ grid:{display:false}, ticks:{color:'#8996a6'} }
+      },
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>`TAT: ${c.raw} min` } } }
+    },
+    plugins:[zoneBandsPlugin, valueLabelsPlugin]
+  });
+}
+
+function updateChart(rows){
+  if(!chart){ initChart(rows); return; }
+  chart.data.labels = rows.map(r => r.hora);
+  chart.data.datasets[0].data = rows.map(r => r.tat);
+  chart.update();
+}
+
+// ---------- TABLE + KPIs ----------
+function renderTable(rows){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  rows.slice().reverse().forEach(row => {
+    const zone = zoneOf(row.tat);
+    const tr = document.createElement('tr');
+    if(zone) tr.className = zone;
+    tr.innerHTML = `<td>${row.placa || '—'}</td><td>${row.hora}</td><td class="tatcell">${row.tat ?? '—'}</td><td>${row.acumulado || '—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderKPIs(rows){
+  const withData = rows.filter(r => r.tat !== null && !isNaN(r.tat));
+  const total = withData.length;
+  const cumpl = total ? Math.round(withData.filter(r => r.tat <= ZONES.yellow).length / total * 100) : 0;
+  const prom = total ? (withData.reduce((s,r)=>s+r.tat,0) / total).toFixed(1) : '—';
+  const last = withData[withData.length - 1];
+
+  document.getElementById('kpiTotal').textContent = total;
+  const cumplEl = document.getElementById('kpiCumpl');
+  cumplEl.textContent = total ? `${cumpl}%` : '—';
+  cumplEl.className = 'value ' + (cumpl >= 80 ? 'green' : cumpl >= 60 ? 'yellow' : 'red');
+  document.getElementById('kpiProm').textContent = total ? `${prom} min` : '—';
+  document.getElementById('kpiUltima').textContent = last ? `${last.placa || '—'} · ${last.hora} · ${last.tat} min` : '—';
+}
+
+// ---------- FETCH LOOP ----------
+function setStatus(ok, msg){
+  document.getElementById('statusDot').classList.toggle('err', !ok);
+  document.getElementById('statusText').textContent = msg;
+  document.getElementById('errorBanner').classList.toggle('show', !ok);
+}
+
+async function fetchData(){
+  try{
+    const response = await fetchViaJSONP();
+    if(response.status === 'error'){
+      const msg = (response.errors && response.errors[0] && response.errors[0].detailed_message) || 'La hoja rechazó la consulta.';
+      throw new Error(msg);
+    }
+    const rows = extractRows(response.table);
+    latestRows = rows;
+    updateChart(rows);
+    renderTable(rows);
+    renderKPIs(rows);
+    document.getElementById('lastUpdate').textContent =
+      '· actualizado ' + new Date().toLocaleTimeString('es-CO',{hour12:false});
+    setStatus(true, 'EN VIVO');
+    // primera lectura en voz alta apenas llegan datos
+    if(voiceEnabled && !firstReadoutDone && rows.some(r => r.tat !== null && !isNaN(r.tat))){
+      firstReadoutDone = true;
+      startReadoutTimer();
+      runFullReadout();
+      prevRowMap = new Map(
+        rows.filter(r => r.tat !== null && !isNaN(r.tat)).map(r => [rowKey(r), r])
+      );
+    } else {
+      // en las siguientes consultas, anuncia solo lo nuevo o lo que cambió
+      announceChanges(rows);
+    }
+  }catch(err){
+    setStatus(false, 'SIN CONEXIÓN');
+    document.getElementById('errorDetail').textContent =
+      'No se pudo leer la hoja (' + err.message + '). Verifica tu conexión a internet y que el archivo esté compartido como "Cualquier persona con el enlace".';
+  }
+}
+
+fetchData();
+setInterval(fetchData, POLL_MS);
+</script>
+</body>
+</html>
