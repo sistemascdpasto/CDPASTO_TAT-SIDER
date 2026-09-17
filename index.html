@@ -16,12 +16,12 @@
     --border:#2a323d;
     --text:#edf1f6;
     --muted:#8996a6;
-    --green:#2f9e44;
-    --green-bg:rgba(47,158,68,.14);
-    --yellow:#f2b705;
-    --yellow-bg:rgba(242,183,5,.14);
-    --red:#e0392b;
-    --red-bg:rgba(224,57,43,.16);
+    --green:#2fe864;
+    --green-bg:rgba(47,232,100,.28);
+    --yellow:#ffd400;
+    --yellow-bg:rgba(255,212,0,.28);
+    --red:#ff2d1f;
+    --red-bg:rgba(255,45,31,.30);
     --amber:#ffb020;
     --cyan:#34d3c9;
     --radius:10px;
@@ -494,9 +494,9 @@ const zoneBandsPlugin = {
     const { ctx, chartArea:{left,right,top,bottom}, scales:{y} } = c;
     if(!y) return;
     const bands = [
-      [0, ZONES.green, 'rgba(47,158,68,.16)'],
-      [ZONES.green, ZONES.yellow, 'rgba(242,183,5,.16)'],
-      [ZONES.yellow, ZONES.max, 'rgba(224,57,43,.16)']
+      [0, ZONES.green, 'rgba(47,232,100,.55)'],
+      [ZONES.green, ZONES.yellow, 'rgba(255,212,0,.50)'],
+      [ZONES.yellow, ZONES.max, 'rgba(255,45,31,.55)']
     ];
     ctx.save();
     bands.forEach(([from,to,color]) => {
