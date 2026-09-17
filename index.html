@@ -512,15 +512,25 @@ const zoneBandsPlugin = {
 const valueLabelsPlugin = {
   id:'valueLabels',
   afterDatasetsDraw(c){
-    const { ctx } = c;
+    const { ctx, chartArea } = c;
+    const fontSize = Math.max(18, Math.round(chartArea.width / 40));
     c.getDatasetMeta(0).data.forEach((pt, i) => {
       const v = c.data.datasets[0].data[i];
       if(v === null || v === undefined) return;
+      const label = String(v);
       ctx.save();
-      ctx.fillStyle = '#edf1f6';
-      ctx.font = "700 11px 'JetBrains Mono', monospace";
+      ctx.font = `800 ${fontSize}px 'JetBrains Mono', monospace`;
       ctx.textAlign = 'center';
-      ctx.fillText(v, pt.x, pt.y - 10);
+      ctx.textBaseline = 'middle';
+      const padX = fontSize * .5, padY = fontSize * .3;
+      const w = ctx.measureText(label).width;
+      const cy = pt.y - fontSize - 10;
+      ctx.fillStyle = 'rgba(12,15,19,.85)';
+      ctx.beginPath();
+      ctx.roundRect(pt.x - w/2 - padX, cy - fontSize/2 - padY, w + padX*2, fontSize + padY*2, 8);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(label, pt.x, cy);
       ctx.restore();
     });
   }
@@ -538,9 +548,9 @@ function initChart(rows){
         backgroundColor:'#edf1f6',
         pointBackgroundColor:'#0c0f13',
         pointBorderColor:'#edf1f6',
-        pointRadius:4,
-        pointHoverRadius:6,
-        borderWidth:2,
+        pointRadius:6,
+        pointHoverRadius:8,
+        borderWidth:3,
         spanGaps:true,
         tension:.15
       }]
